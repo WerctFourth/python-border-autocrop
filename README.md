@@ -106,4 +106,4 @@ The `-o` option sets a template for output directories. Then the script generate
 ## AVIF encoding
 This script uses an external AVIF encoder because the Pillow AVIF Plugin was always outdated and was restricted to multithreaded processing (the script forces avifenc to use a single thread). After the script has saved an image in PNG, it passes parameters to the avifenc using the saved PNG as source, executes it and waits for it to complete.
 # Suggestions / bugs?
-Please open an issue if you have an idea (maybe good heurisics to automatically set parameters for each image?😁) or spotted a bug.
+Please open an issue if you have an idea (maybe good heuristics to automatically set parameters for each image?😁) or spotted a bug.
