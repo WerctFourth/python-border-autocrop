@@ -11,7 +11,9 @@ A Python script that crops borders from images.
 * Multi-core processing
 * Auto-detects a grayscale image and saves it as such
 # Requirements
-Python, Pillow and Numpy. The current version has been tested with Python 3.12.2, [Pillow](https://pypi.org/project/pillow/) 10.3.0 and [Numpy](https://pypi.org/project/numpy/) 1.26.4. It may work on other versions.
+Bundled versions are on the [Releases](https://github.com/WerctFourth/python-border-autocrop/releases) page. They don't require anything else (besides avifenc).
+
+The script requires Python, Pillow and Numpy. The current version has been tested with Python 3.12.2, [Pillow](https://pypi.org/project/pillow/) 10.3.0 and [Numpy](https://pypi.org/project/numpy/) 1.26.4. It may work on other versions.
 
 [External AVIF encoder](https://github.com/AOMediaCodec/libavif) is required to save images to AVIF.
 # How to use
