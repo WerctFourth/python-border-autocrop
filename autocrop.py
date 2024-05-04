@@ -22,10 +22,10 @@ def getParameterBlock():
     parser.add_argument("-cd", "--colordistance", default=16, type=int, help="How many colors to treat as a background color (0 to 255, default=16)")
     parser.add_argument("-et", "--exhaustivethreshold", default=-1, type=float, help="How much of a border must be cropped to not trigger exhaustive pass in %% (0.0 to 100.0, default=-1, disabled=-1, always=0)")
     parser.add_argument("-rct", "--rgbcolorthreshold", default=9, type=int, help="How much difference between bands is allowed to save a RGB image as grayscale (0 to 255, default=9, always=255)")
-    parser.add_argument("-nr", "--noresize", action="store_true", help="Disable resizing")
-    parser.add_argument("-rf", "--resizefit", action="store_true", help="Enable fit resizing instead of fit only width")
+    parser.add_argument("-rf", "--resizefit", action="store_true", help="Enable fit resizing")
     parser.add_argument("-rw", "--resizewidth", default=0, type=int, help="Target width for fit resizing")
     parser.add_argument("-rh", "--resizeheight", default=0, type=int, help="Target height for fit resizing")
+    parser.add_argument("-rfw", "--resizefitwidth", action="store_true", help="Enable width fit resizing")
     parser.add_argument("-vrt", "--verticalresizetarget", default=1200, type=int, help="Width resize target for vertical images (default=1200)")
     parser.add_argument("-hrt", "--horizontalresizetarget", default=1920, type=int, help="Width resize target for horizontal images (default=1920)")
     parser.add_argument("-ea", "--encodeavif", action="store_true", help="Enable encoding to AVIF")
@@ -47,13 +47,7 @@ def getParameterBlock():
         exit()
     if args.rgbcolorthreshold < 0 or args.rgbcolorthreshold > 255:
         print("rgbcolorthreshold must be 0 to 255")
-        exit()
-    if args.verticalresizetarget <= 0:
-        print("verticalresizetarget must be >0")
-        exit()
-    if args.horizontalresizetarget <= 0:
-        print("horizontalresizetarget must be >0")
-        exit()       
+        exit()    
     if args.pngcompressionlevel < 0 or args.pngcompressionlevel > 9:
         print("pngcompressionlevel must be 0 to 9")
         exit()
@@ -66,9 +60,15 @@ def getParameterBlock():
     if args.encodeavif and (args.encodequality < 0 or args.encodequality > 100):
         print("encodequality must be 0 to 100")
         exit()
+    if args.resizefit and args.resizefitwidth:
+        print("resizefit and resizefitwidth can't be used simultaneously")
+        exit()    
     if args.resizefit and (args.resizewidth <= 0 or args.resizeheight <= 0):
         print("For resizefit: resizewidth and resizeheight must be set and >0")
         exit()
+    if args.resizefitwidth and (args.verticalresizetarget <= 0 or args.horizontalresizetarget <= 0):
+        print("For resizefitwidth: verticalresizetarget and horizontalresizetarget must be set and >0")
+        exit()    
     return args
 
 def savePng(argImg: Image, argPath: pathlib.Path, argPBlock):
@@ -104,7 +104,10 @@ def fuzzyCount(argSourceDict: dict, argPBlock) -> int:
 def getResampleSize(argX: int, argY: int, argPBlock):
     if argPBlock.resizefit:
         tmpRatio = min(argPBlock.resizewidth / argX, argPBlock.resizeheight / argY)
-        return (argX * tmpRatio, argY * tmpRatio)
+        if tmpRatio < 1:
+            return (argX * tmpRatio, argY * tmpRatio)
+        else:
+            return (argX, argY)
     else:
         if argX < argY: #Image is vertical
             internalTarget = argPBlock.verticalresizetarget
@@ -233,10 +236,10 @@ def workerEntryPoint(argWorkerArgs):
     if im.mode == "P":
         imCrop.putpalette(im.getpalette())
 
-    if wkArgs.noresize:
-        imResize = imCrop
-    else:
+    if wkArgs.resizefit or wkArgs.resizefitwidth:
         imResize = imCrop.resize(getResampleSize(imCrop.size[0], imCrop.size[1], wkArgs), Image.Resampling.LANCZOS)
+    else:
+        imResize = imCrop
 
     currentResultPng = getResultFilePath(argImageFilePath, "png", wkArgs)
     os.makedirs(currentResultPng.parent, exist_ok=True)
