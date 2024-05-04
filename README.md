@@ -17,11 +17,11 @@ Python, Pillow and Numpy. The current version has been tested with Python 3.12.2
 # How to use
 ```
 usage: autocrop.py [-h] -i INPUT -o OUTPUT [-fr FILLRATIO] [-cd COLORDISTANCE] [-et EXHAUSTIVETHRESHOLD]
-                          [-rct RGBCOLORTHRESHOLD] [-nr] [-rf] [-rw RESIZEWIDTH] [-rh RESIZEHEIGHT]
+                          [-rct RGBCOLORTHRESHOLD] [-rf] [-rw RESIZEWIDTH] [-rh RESIZEHEIGHT] [-rfw]
                           [-vrt VERTICALRESIZETARGET] [-hrt HORIZONTALRESIZETARGET] [-ea] [-aep AVIFEXECUTABLEPATH]
                           [-eq ENCODEQUALITY] [-pcl PNGCOMPRESSIONLEVEL] [-lp LOGPATH] [-nw]
 
-Semi-automated border cropper
+Autocrop script R4
 
 options:
   -h, --help            show this help message and exit
@@ -39,12 +39,13 @@ options:
   -rct RGBCOLORTHRESHOLD, --rgbcolorthreshold RGBCOLORTHRESHOLD
                         How much difference between bands is allowed to save a RGB image as grayscale (0 to 255,
                         default=9, always=255)
-  -nr, --noresize       Disable resizing
-  -rf, --resizefit      Enable fit resizing instead of fit only width
+  -rf, --resizefit      Enable fit resizing
   -rw RESIZEWIDTH, --resizewidth RESIZEWIDTH
                         Target width for fit resizing
   -rh RESIZEHEIGHT, --resizeheight RESIZEHEIGHT
                         Target height for fit resizing
+  -rfw, --resizefitwidth
+                        Enable width fit resizing
   -vrt VERTICALRESIZETARGET, --verticalresizetarget VERTICALRESIZETARGET
                         Width resize target for vertical images (default=1200)
   -hrt HORIZONTALRESIZETARGET, --horizontalresizetarget HORIZONTALRESIZETARGET
@@ -70,17 +71,22 @@ If you have noisy borders, then you may have to increase these values slightly, 
 
 If you want to know more of what exactly these parameters do, please read the "How does it work?" section.
 ### Resizing
-The resizing resolution can be controlled using the -nr (disables resizing) -vrt (sets the target width for a vertical/portrait image) -hrt (sets the target width for a horizontal/landscape image). The resizing algorihm implemented now is not a "fit" one, but something like "fit width for a rotating screen". So for example for `-vrt 1200` and `-hrt 1920` a source `2000x3000` image will become a `1200x1800` image, and `3000x2000` will become `1920x1280`.
+Resize is disabled by default.
+
+There are two resizing algorithms implemented here: usual "fit" and "fit width".
 
 For a more traditional "fit" resizing enable the `-rf` switch and set the desired resolution using the `-rw` (for width) and `-rh` (for height) arguments.
+
+Set the `-rfw` switch to enable "fit width" mode. The resizing resolution can be controlled using the `-vrt` (sets the target width for a vertical/portrait image) and `-hrt` (sets the target width for a horizontal/landscape image) options. The resizing algorihm implemented now is not a "fit" one, but something like "fit width for a rotating screen". So for example for `-vrt 1200` and `-hrt 1920` a source `2000x3000` image will become a `1200x1800` image, and `3000x2000` will become `1920x1280`.
+
 ## Examples
-Process a directory `R:\Input` with default thresholds and save files to `R:\ResultPng` and `R:\ResultAvif`; use avifenc.exe from a script's directory, save log to a script's directory `autocroplog.txt`:
+Process a directory `R:\Input` with default thresholds without resize and save files to `R:\ResultPng` and `R:\ResultAvif`; use avifenc.exe from a script's directory, save log to a script's directory `autocroplog.txt`:
 
 `python autocrop.py -i R:\Input -o R:\Result -ea`
 
 Process a single file `R:\test.png` with default thresholds, don't encode to AVIF, don't resize, save to `R:\OutputPng`, save log to `R:\alog.txt`:
 
-`python autocrop.py -i R:\test.png -o R:\Output -lp R:\alog.txt -nr`
+`python autocrop.py -i R:\test.png -o R:\Output -lp R:\alog.txt`
 
 Process a directory `R:\Input`, set fill ratio to 2%, set color distance to 32 colors, set exaustive pass threshold to 5%, save only in PNG to `R:\SavesPng`, don't wait on exit:
 
@@ -89,6 +95,7 @@ Process a directory `R:\Input`, set fill ratio to 2%, set color distance to 32 c
 Process `R:\test.png`, fit the image to `1920x1080`, don't encode to AVIF and save to `R:\SavePng`:
 
 `python autocrop.py -i R:\test.png -o R:\Save -rf -rw 1920 -rh 1080`
+
 # How does it work?
 ## Cropping
 The script loads an image and converts it into a grayscale/luminance-only form. Then it starts processing it line-by-line (row or coulumn, depends on what side of an image is being cropped).
@@ -97,7 +104,7 @@ It counts every unique luminance value in the line and how many pixels uses it. 
 
 Then the script counts all pixels in the line that have a luma value that belongs to the background range. Then it checks whether the portion of non-background pixels exceeds the "fill ratio" (`-fr` setting, may help with high contrast noise or unnecessary details, such as page numbers) percentage or not. If it doesn't, then the line still belongs to the border and the script starts checking the next line. If it does, then the scripts stops analyzing at this line and crops the detected border.
 
-Left, right, top and bottom sides are analyzed separately from an outer egde towards center.
+Left, right, top and bottom sides are analyzed separately from an outer edge towards center.
 
 The `-et` option enables the exhaustive cropping mode (it functions on left and right borders only currently). If percentage of cropped lines is below the `-et` value, then the script starts the exhaustive pass. The difference from the previous pass is now the script doesn't stop on a first line that exceeds the fill ratio. Instead, it proceeds to analyze all lines.
 ## Saving
