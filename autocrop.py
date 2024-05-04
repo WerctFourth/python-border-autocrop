@@ -107,7 +107,7 @@ def getResampleSize(argX: int, argY: int, argPBlock):
     if argPBlock.resizefit:
         tmpRatio = min(argPBlock.resizewidth / argX, argPBlock.resizeheight / argY)
         if tmpRatio < 1:
-            return (argX * tmpRatio, argY * tmpRatio)
+            return (round(argX * tmpRatio), round(argY * tmpRatio))
         else:
             return (argX, argY)
     else:
