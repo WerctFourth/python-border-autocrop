@@ -1,5 +1,7 @@
 from PIL import Image, ImageChops, ImageCms
-import os, pathlib, multiprocessing, subprocess, logging, numpy, argparse, io
+import numpy
+import os, pathlib, multiprocessing, subprocess, logging, argparse, io
+ver = "R4"
     
 def getAvifCmdline(argInPath: pathlib.Path, argOutPath: pathlib.Path, argPBlock) -> list:
     tmpList = list()
@@ -15,7 +17,7 @@ def getAvifCmdline(argInPath: pathlib.Path, argOutPath: pathlib.Path, argPBlock)
     return tmpList
 
 def getParameterBlock():
-    parser = argparse.ArgumentParser(description="Semi-automated border cropper")
+    parser = argparse.ArgumentParser(description=f"Autocrop script {ver}")
     parser.add_argument("-i", "--input", type=pathlib.Path, help="Input file or directory", required=True)
     parser.add_argument("-o", "--output", type=pathlib.Path, help="Output directory template", required=True)
     parser.add_argument("-fr", "--fillratio", default=0.4, type=float, help="Border fill ratio in %% (0.0 to 100.0, default=0.4)")
@@ -267,12 +269,12 @@ def main():
     except FileNotFoundError:
         print("Can't setup logging due to invalid path. Logging is disabled.")
 
-    print("Autocrop script R4 is starting")
-    logging.info("Autocrop script R4 is starting")
+    print(f"Autocrop script {ver}")
+    logging.info(f"Autocrop script {ver}")
 
-    logging.info(f"Line threshold: {str(args.fillratio)}%")
-    logging.info(f"Fuzzy distance: {str(args.colordistance)} colors")
-    logging.info(f"Input folder: {args.input.as_posix()}")
+    logging.info(f"Fill ratio: {str(args.fillratio)}%")
+    logging.info(f"Color distance: {str(args.colordistance)} colors")
+    logging.info(f"Input file/directory: {args.input.as_posix()}")
     logging.info(f"Output template: {args.output.as_posix()}")
 
     if pathlib.Path.is_file(args.input):
