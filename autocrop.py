@@ -309,4 +309,5 @@ def main():
         input("Press enter to exit.")
     
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     main()
