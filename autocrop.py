@@ -74,11 +74,11 @@ def getParameterBlock():
     return args
 
 def savePng(argImg: Image, argPath: pathlib.Path, argPBlock):
-    if argImg.mode == "1" or argImg.mode == "L" or argImg.mode == "LA" or argImg.mode == "P":
+    if argImg.mode in ("1", "L", "LA", "P"):
         argImg.save(argPath, "png", compress_level=argPBlock.pngcompressionlevel)
     else:
         if checkColor(argImg):
-            if argImg.mode == "RGB" or argImg.mode == "I" or argImg.mode == "RGBA":
+            if argImg.mode in ("RGB", "I", "RGBA"):
                 argImg.save(argPath, "png", compress_level=argPBlock.pngcompressionlevel)
             else:
                 argImg.convert(mode="RGB", dither=Image.Dither.NONE).save(argPath, "png", compress_level=argPBlock.pngcompressionlevel)
@@ -266,8 +266,7 @@ def main():
         imageFileList.append((args.input, args))
     else:
         for currentImageFilePath in args.input.rglob("*"):
-            if currentImageFilePath.is_file and \
-                    (currentImageFilePath.suffix == ".jpg" or currentImageFilePath.suffix == ".jpeg" or currentImageFilePath.suffix == ".png"):
+            if currentImageFilePath.is_file and (currentImageFilePath.suffix in (".jpg", ".jpeg", ".png")):
                 imageFileList.append((currentImageFilePath, args))
         logging.info(f"Converting {len(imageFileList)} files")
     
