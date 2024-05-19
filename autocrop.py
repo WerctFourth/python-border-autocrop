@@ -93,15 +93,6 @@ def checkColor(argImg: Image, argPBlock) -> bool:
 def getResultFilePath(argSourceFilePath: pathlib.Path, argExtension: str, argPBlock) -> pathlib.Path:
     return argPBlock.output.with_name(argPBlock.output.name + argExtension.title()) / argSourceFilePath.parent.name \
           / (argSourceFilePath.stem + "." + argExtension.lower())
-
-def fuzzyCount(argSourceDict: dict, argPBlock) -> int:
-    colorList = list(argSourceDict.keys())
-    tmpValue = 0
-    tmpMainColor = int(colorList[0])
-    for currentColor in colorList:
-        if abs(tmpMainColor - int(currentColor)) < argPBlock.colordistance:
-            tmpValue += argSourceDict[currentColor]
-    return tmpValue
         
 def getResampleSize(argX: int, argY: int, argPBlock):
     if argPBlock.resizefit:
@@ -123,13 +114,6 @@ def getResampleSize(argX: int, argY: int, argPBlock):
         else:
             return (argX, argY)
 
-def sortDict(argSourceDict: dict) -> dict:
-    sortedDict = dict()
-    sortedKeys = sorted(argSourceDict, key=argSourceDict.get, reverse=True)
-    for w in sortedKeys:
-        sortedDict[w] = argSourceDict[w]
-    return sortedDict
-
 def cropUniversal(argImgArray: numpy.ndarray, argPBlock, argVertical: bool, argExhaustive: bool, argReverse: bool):
     emptyLinesList = list()
 
@@ -150,9 +134,9 @@ def cropUniversal(argImgArray: numpy.ndarray, argPBlock, argVertical: bool, argE
             vals, freq = numpy.unique(argImgArray[coord, :], return_counts=True)
         else:
             vals, freq = numpy.unique(argImgArray[:, coord], return_counts=True)
-        linePixelDict = dict(zip(vals, freq))
-        linePixelDictSorted = sortDict(linePixelDict)
-        lineFuzzyError = round((1 - fuzzyCount(linePixelDictSorted, argPBlock) / internalSize2) * 100, 4)
+        backColor = vals[numpy.argmax(freq)]
+        newFuzzyCount = numpy.sum(numpy.take(freq, numpy.where(numpy.logical_and(vals > (backColor - argPBlock.colordistance), vals < (backColor + argPBlock.colordistance)))))
+        lineFuzzyError = round((1 - newFuzzyCount / internalSize2) * 100, 4)
         if lineFuzzyError < argPBlock.fillratio:
             emptyLinesList.append(coord)
         else:
