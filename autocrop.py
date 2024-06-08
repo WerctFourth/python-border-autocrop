@@ -94,25 +94,26 @@ def getResultFilePath(argSourceFilePath: pathlib.Path, argExtension: str, argPBl
     return argPBlock.output.with_name(argPBlock.output.name + argExtension.title()) / argSourceFilePath.parent.name \
           / (argSourceFilePath.stem + "." + argExtension.lower())
         
-def getResampleSize(argX: int, argY: int, argPBlock):
+def getResampleSize(imgSize, argPBlock):
+    x, y = imgSize
     if argPBlock.resizefit:
-        tmpRatio = min(argPBlock.resizewidth / argX, argPBlock.resizeheight / argY)
+        tmpRatio = min(argPBlock.resizewidth / x, argPBlock.resizeheight / y)
         if tmpRatio < 1:
-            return (round(argX * tmpRatio), round(argY * tmpRatio))
+            return (round(x * tmpRatio), round(y * tmpRatio))
         else:
-            return (argX, argY)
+            return (x, y)
     else:
-        if argX < argY: #Image is vertical
+        if x < y: #Image is vertical
             internalTarget = argPBlock.verticalresizetarget
         else: #Image is horizontal
             internalTarget = argPBlock.horizontalresizetarget
 
-        if argX > internalTarget:
-            tmpRatio = internalTarget / argX
-            newY = round(argY * tmpRatio)
+        if x > internalTarget:
+            tmpRatio = internalTarget / x
+            newY = round(y * tmpRatio)
             return (internalTarget, newY)
         else:
-            return (argX, argY)
+            return (x, y)
 
 def cropUniversal(argImgArray: numpy.ndarray, argPBlock, argVertical: bool, argExhaustive: bool, argReverse: bool):
     emptyLinesList = list()
@@ -223,7 +224,13 @@ def workerEntryPoint(argWorkerArgs):
         imCrop.putpalette(im.getpalette())
 
     if wkArgs.resizefit or wkArgs.resizefitwidth:
-        imResize = imCrop.resize(getResampleSize(imCrop.size[0], imCrop.size[1], wkArgs), Image.Resampling.LANCZOS)
+        newSize = getResampleSize(imCrop.size, wkArgs)
+        if imCrop.size == newSize:
+            imResize = imCrop
+            debugMessagesList.append(f"Image is too small to resize ({imCrop.size[0]}x{imCrop.size[1]})")
+        else:
+            imResize = imCrop.resize(newSize, Image.Resampling.LANCZOS)
+            debugMessagesList.append(f"Resizing from {imCrop.size[0]}x{imCrop.size[1]} to {newSize[0]}x{newSize[1]}")        
     else:
         imResize = imCrop
 
